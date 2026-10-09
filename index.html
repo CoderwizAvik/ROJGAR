@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KaamSaathi - The Professional Network for Every Worker</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <!-- Chart.js CDN for Worker Dashboard -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              500: '#f97316',
+              600: '#ea580c', // Warm Peach / Orange Primary Accent
+              700: '#c2410c',
+            },
+            emerald: {
+              500: '#10b981',
+              600: '#059669', // Trust Green
+            },
+            surface: {
+              bg: '#FAF8F5',  // Warm Off-White
+              card: '#FFFFFF',
+              accent: '#F3EFEA',
+              border: '#E7E2DA'
+            },
+            charcoal: {
+              800: '#292524',
+              900: '#1C1917', // Deep Charcoal
+            }
+          },
+          fontFamily: {
+            heading: ['Plus Jakarta Sans', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(28, 25, 23, 0.06)',
+            'hover': '0 12px 30px -4px rgba(28, 25, 23, 0.12)',
+            'floating': '0 20px 40px -6px rgba(234, 88, 12, 0.15)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #FAF8F5;
+      color: #1C1917;
+      overflow-x: hidden;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #FAF8F5;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #D6CEC4;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #A89F91;
+    }
+    /* Pulsing beacon */
+    .beacon {
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse-green 2s infinite;
+    }
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app" class="min-h-screen flex flex-col justify-between relative pb-20 md:pb-0">
+
+  <!-- ================= TOP NAVIGATION BAR ================= -->
+  <header class="sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-surface-border transition-all duration-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- LOGO -->
+      <div class="flex items-center gap-3 cursor-pointer" @click="activeView = 'landing'">
+        <div class="w-11 h-11 bg-brand-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-brand-600/20 font-bold text-xl">
+          <i data-lucide="wrench" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <span class="text-2xl font-extrabold tracking-tight text-charcoal-900 block leading-none">KAAMSAATHI</span>
+          <span class="text-[10px] font-semibold text-brand-600 tracking-wider uppercase">Kaam Bhi. Samman Bhi.</span>
+        </div>
+      </div>
+
+      <!-- DESKTOP NAV LINKS -->
+      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-charcoal-800">
+        <button @click="activeView = 'landing'" :class="{'text-brand-600 font-bold': activeView === 'landing'}" class="hover:text-brand-600 transition-colors">Home</button>
+        <button @click="activeView = 'discover'" :class="{'text-brand-600 font-bold': activeView === 'discover'}" class="hover:text-brand-600 transition-colors flex items-center gap-1.5">
+          <span>Find Workers</span>
+          <span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Live Map</span>
+        </button>
+        <button @click="activeView = 'jobs'" :class="{'text-brand-600 font-bold': activeView === 'jobs'}" class="hover:text-brand-600 transition-colors">Find Work</button>
+        <button @click="activeView = 'dashboard'" :class="{'text-brand-600 font-bold': activeView === 'dashboard'}" class="hover:text-brand-600 transition-colors flex items-center gap-1.5">
+          <span>Worker Portal</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        </button>
+      </nav>
+
+      <!-- RIGHT ACTIONS -->
+      <div class="hidden md:flex items-center gap-4">
+        <button @click="openEmergencyModal" class="px-3.5 py-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-all flex items-center gap-1.5">
+          <i data-lucide="zap" class="w-4 h-4 fill-red-500 text-red-500"></i>
+          Emergency SOS
+        </button>
+        <button @click="activeView = 'discover'" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm rounded-xl shadow-md shadow-brand-600/20 transition-all flex items-center gap-2">
+          <i data-lucide="search" class="w-4 h-4"></i>
+          <span>Book Service</span>
+        </button>
+      </div>
+
+      <!-- MOBILE HEADER RIGHT -->
+      <div class="flex md:hidden items-center gap-2">
+        <button @click="openEmergencyModal" class="p-2 bg-red-100 text-red-600 rounded-lg font-bold text-xs flex items-center gap-1">
+          <i data-lucide="zap" class="w-4 h-4 fill-red-500"></i>
+          SOS
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-grow">
+
+    <!-- ================= 1. LANDING PAGE VIEW ================= -->
+    <div v-if="activeView === 'landing'">
+      
+      <!-- HERO SECTION -->
+      <section class="relative pt-8 pb-16 md:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          
+          <!-- LEFT HERO TEXT -->
+          <div class="lg:col-span-7 space-y-6">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-100/80 border border-brand-500/20 text-brand-700 text-xs font-semibold">
+              <i data-lucide="shield-check" class="w-4 h-4 text-brand-600"></i>
+              <span>India's 1st Verified Professional Skilled Network</span>
+            </div>
+
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-charcoal-900 tracking-tight leading-[1.15]">
+              Great Work Deserves to Be <span class="text-brand-600 underline decoration-brand-500/30 decoration-wavy decoration-2">Found</span>.
+            </h1>
+
+            <p class="text-lg text-stone-600 max-w-2xl font-normal leading-relaxed">
+              KaamSaathi connects skilled local professionals—plumbers, electricians, mechanics, painters & technicians—with customers and fair-pay employment opportunities.
+            </p>
+
+            <!-- HERO QUICK SEARCH BOX -->
+            <div class="bg-white p-3 sm:p-4 rounded-2xl shadow-soft border border-surface-border space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3">
+              <div class="flex-1 flex items-center gap-3 px-3 py-2 bg-surface-bg rounded-xl border border-stone-200">
+                <i data-lucide="wrench" class="w-5 h-5 text-stone-400"></i>
+                <select v-model="selectedCategory" class="bg-transparent w-full text-sm font-medium text-charcoal-900 focus:outline-none cursor-pointer">
+                  <option value="">Select Required Service...</option>
+                  <option v-for="cat in serviceCategories" :key="cat.name" :value="cat.name">{{ cat.icon }} {{ cat.name }}</option>
+                </select>
+              </div>
+
+              <div class="flex-1 flex items-center gap-3 px-3 py-2 bg-surface-bg rounded-xl border border-stone-200">
+                <i data-lucide="map-pin" class="w-5 h-5 text-brand-600"></i>
+                <input type="text" v-model="userLocation" placeholder="Kolkata, Park Street..." class="bg-transparent w-full text-sm font-medium text-charcoal-900 focus:outline-none">
+              </div>
+
+              <button @click="activeView = 'discover'" class="w-full sm:w-auto px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+                <i data-lucide="search" class="w-4 h-4"></i>
+                <span>Find Professionals</span>
+              </button>
+            </div>
+
+            <!-- POPULAR QUICK TAGS -->
+            <div class="flex flex-wrap items-center gap-2 pt-2">
+              <span class="text-xs font-semibold text-stone-500 uppercase tracking-wider mr-1">Popular:</span>
+              <button v-for="tag in popularTags" :key="tag" @click="filterByTag(tag)" class="px-3 py-1 bg-white hover:bg-brand-50 hover:border-brand-300 text-stone-700 text-xs font-medium rounded-lg border border-stone-200 transition-all">
+                {{ tag }}
+              </button>
+            </div>
+          </div>
+
+          <!-- RIGHT HERO VISUAL: CONNECTED WORKER CARDS -->
+          <div class="lg:col-span-5 relative">
+            <div class="absolute -inset-4 bg-gradient-to-tr from-orange-200/40 via-emerald-100/30 to-amber-100/40 rounded-3xl blur-2xl -z-10"></div>
+            
+            <div class="space-y-4">
+              <!-- WORKER HERO CARD 1 -->
+              <div class="bg-white p-4 rounded-2xl shadow-soft border border-surface-border flex items-center justify-between gap-4 hover:shadow-hover transition-all transform hover:-translate-y-1">
+                <div class="flex items-center gap-3">
+                  <div class="relative">
+                    <img src="https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80" class="w-14 h-14 rounded-xl object-cover border-2 border-emerald-500" alt="Rajesh">
+                    <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">✓</span>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <h4 class="font-bold text-charcoal-900 text-base">Rajesh Kumar</h4>
+                      <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded">Verified Pro</span>
+                    </div>
+                    <p class="text-xs text-stone-500 font-medium">Certified Electrician · 8 yrs exp</p>
+                    <div class="flex items-center gap-2 mt-1 text-xs">
+                      <span class="text-amber-500 font-bold flex items-center gap-0.5">⭐ 4.9 <span class="text-stone-400 font-normal">(327 jobs)</span></span>
+                      <span class="text-stone-300">•</span>
+                      <span class="text-emerald-600 font-semibold">1.2 km away</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-stone-400">Starts at</p>
+                  <p class="text-base font-extrabold text-charcoal-900">₹299</p>
+                  <button @click="viewWorkerProfile(workers[0])" class="mt-1 px-3 py-1 bg-stone-100 hover:bg-brand-600 hover:text-white text-stone-800 text-xs font-bold rounded-lg transition-colors">
+                    Profile
+                  </button>
+                </div>
+              </div>
+
+              <!-- WORKER HERO CARD 2 -->
+              <div class="bg-white p-4 rounded-2xl shadow-soft border border-surface-border flex items-center justify-between gap-4 hover:shadow-hover transition-all transform hover:-translate-y-1 ml-4 sm:ml-8">
+                <div class="flex items-center gap-3">
+                  <div class="relative">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" class="w-14 h-14 rounded-xl object-cover border-2 border-emerald-500" alt="Arif">
+                    <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">✓</span>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <h4 class="font-bold text-charcoal-900 text-base">Arif Khan</h4>
+                      <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded">AC Specialist</span>
+                    </div>
+                    <p class="text-xs text-stone-500 font-medium">HVAC & Refrigerator Tech</p>
+                    <div class="flex items-center gap-2 mt-1 text-xs">
+                      <span class="text-amber-500 font-bold flex items-center gap-0.5">⭐ 4.8 <span class="text-stone-400 font-normal">(184 jobs)</span></span>
+                      <span class="text-stone-300">•</span>
+                      <span class="text-emerald-600 font-semibold">2.4 km away</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-stone-400">Starts at</p>
+                  <p class="text-base font-extrabold text-charcoal-900">₹450</p>
+                  <button @click="viewWorkerProfile(workers[2])" class="mt-1 px-3 py-1 bg-stone-100 hover:bg-brand-600 hover:text-white text-stone-800 text-xs font-bold rounded-lg transition-colors">
+                    Profile
+                  </button>
+                </div>
+              </div>
+
+              <!-- TRUST CARD BANNER -->
+              <div class="p-3 bg-emerald-900 text-white rounded-xl shadow-md flex items-center justify-between text-xs font-medium">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 beacon"></span>
+                  <span><strong>142 Workers Active</strong> nearby in Kolkata right now</span>
+                </div>
+                <span class="text-emerald-300 font-bold">Instant Booking →</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TRUST PILLARS SECTION -->
+      <section class="py-12 bg-white border-y border-surface-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center max-w-2xl mx-auto mb-10">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-charcoal-900">Local work. Professional trust.</h2>
+            <p class="text-stone-600 text-sm mt-2">KaamSaathi gives every skilled worker a verified digital identity and gives customers total transparent peace of mind.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="p-6 bg-surface-bg rounded-2xl border border-surface-border space-y-3">
+              <div class="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center font-bold">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-bold text-lg text-charcoal-900">Verified Identity</h3>
+              <p class="text-xs text-stone-600 leading-relaxed">Govt ID check + skill practical assessment + background verification badges.</p>
+            </div>
+
+            <div class="p-6 bg-surface-bg rounded-2xl border border-surface-border space-y-3">
+              <div class="w-10 h-10 bg-orange-100 text-brand-600 rounded-xl flex items-center justify-center font-bold">
+                <i data-lucide="tag" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-bold text-lg text-charcoal-900">Transparent Pricing</h3>
+              <p class="text-xs text-stone-600 leading-relaxed">Compare local market standard rate cards before booking. Zero hidden surge scams.</p>
+            </div>
+
+            <div class="p-6 bg-surface-bg rounded-2xl border border-surface-border space-y-3">
+              <div class="w-10 h-10 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center font-bold">
+                <i data-lucide="star" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-bold text-lg text-charcoal-900">Real Customer Reviews</h3>
+              <p class="text-xs text-stone-600 leading-relaxed">Authentic ratings & photo proof of past completed jobs from real nearby households.</p>
+            </div>
+
+            <div class="p-6 bg-surface-bg rounded-2xl border border-surface-border space-y-3">
+              <div class="w-10 h-10 bg-blue-100 text-blue-700 rounded-xl flex items-center justify-center font-bold">
+                <i data-lucide="map-pin" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-bold text-lg text-charcoal-900">Local & Fast Arrival</h3>
+              <p class="text-xs text-stone-600 leading-relaxed">Discover mechanics & technicians within a 2–5 km radius with live GPS tracking.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURED WORKER SPOTLIGHT ("YOUR SKILL IS YOUR RESUME") -->
+      <section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-gradient-to-br from-charcoal-900 via-stone-900 to-charcoal-800 text-white rounded-3xl p-8 sm:p-12 shadow-hover relative overflow-hidden">
+          <div class="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 bg-brand-600/20 rounded-full blur-3xl"></div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+            <div class="lg:col-span-6 space-y-6">
+              <span class="text-xs font-bold uppercase tracking-widest text-brand-500 bg-brand-500/10 px-3 py-1 rounded-full border border-brand-500/20">The KaamSaathi Difference</span>
+              <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">"Your Skill Is Your Digital Resume."</h2>
+              <p class="text-stone-300 text-sm leading-relaxed">
+                A college degree isn't the only proof of excellence. On KaamSaathi, a worker's reputation compounds over time—every completed tap installation, motor repair, and painting project builds a shareable professional profile with verified earnings & dignity.
+              </p>
+
+              <!-- REPUTATION TIMELINE -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-stone-800">
+                <div>
+                  <p class="text-2xl font-extrabold text-brand-500">327+</p>
+                  <p class="text-[11px] text-stone-400 font-medium">Jobs Completed</p>
+                </div>
+                <div>
+                  <p class="text-2xl font-extrabold text-amber-400">4.9 ★</p>
+                  <p class="text-[11px] text-stone-400 font-medium">Avg Rating</p>
+                </div>
+                <div>
+                  <p class="text-2xl font-extrabold text-emerald-400">68%</p>
+                  <p class="text-[11px] text-stone-400 font-medium">Repeat Customers</p>
+                </div>
+                <div>
+                  <p class="text-2xl font-extrabold text-blue-400">94/100</p>
+                  <p class="text-[11px] text-stone-400 font-medium">Trust Score</p>
+                </div>
+              </div>
+
+              <div class="pt-2">
+                <button @click="viewWorkerProfile(workers[0])" class="px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl shadow-lg transition-all inline-flex items-center gap-2 text-sm">
+                  <span>Explore Sample Pro Profile</span>
+                  <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- PRO PROFILE CARD PREVIEW -->
+            <div class="lg:col-span-6 bg-white text-charcoal-900 rounded-2xl p-6 shadow-2xl space-y-4">
+              <div class="flex items-start justify-between border-b border-stone-100 pb-4">
+                <div class="flex items-center gap-4">
+                  <img src="https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80" class="w-16 h-16 rounded-xl object-cover border-2 border-brand-600" alt="Rajesh Kumar">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h3 class="font-extrabold text-lg text-charcoal-900">Rajesh Kumar</h3>
+                      <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-600"></i> Verified ID
+                      </span>
+                    </div>
+                    <p class="text-xs text-stone-600 font-medium">Certified Master Electrician · Kolkata</p>
+                    <p class="text-xs text-stone-400">Languages: Hindi, Bengali, English</p>
+                  </div>
+                </div>
+                <div class="bg-brand-50 text-brand-700 px-3 py-1.5 rounded-xl text-center">
+                  <p class="text-[10px] uppercase font-bold text-brand-600">KaamSaathi ID</p>
+                  <p class="text-xs font-mono font-bold">#KS-8821</p>
+                </div>
+              </div>
+
+              <!-- SKILL PILLS -->
+              <div>
+                <p class="text-xs font-bold text-stone-500 mb-2">VERIFIED SKILLS & CERTIFICATIONS:</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="px-2.5 py-1 bg-stone-100 text-stone-800 text-xs font-semibold rounded-lg">Wiring & Fuse Box</span>
+                  <span class="px-2.5 py-1 bg-stone-100 text-stone-800 text-xs font-semibold rounded-lg">Inverter Setup</span>
+                  <span class="px-2.5 py-1 bg-stone-100 text-stone-800 text-xs font-semibold rounded-lg">Sub-meter Fitting</span>
+                  <span class="px-2.5 py-1 bg-stone-100 text-stone-800 text-xs font-semibold rounded-lg">Home Automation</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-2">
+                <span class="text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-lg">🟢 Available Today</span>
+                <span class="text-xs font-extrabold text-charcoal-900">Starting @ ₹299</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOW IT WORKS (4-STEP FLOW) -->
+      <section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-12">
+          <span class="text-xs font-bold text-brand-600 uppercase tracking-widest">Simple & Fast</span>
+          <h2 class="text-3xl font-extrabold text-charcoal-900 mt-1">How KaamSaathi Works</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div class="bg-white p-6 rounded-2xl border border-surface-border shadow-soft relative">
+            <span class="text-4xl font-black text-brand-500/20 absolute top-4 right-4">01</span>
+            <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center font-bold mb-4">
+              <i data-lucide="search" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-base text-charcoal-900 mb-1">Tell us what you need</h3>
+            <p class="text-xs text-stone-600 leading-relaxed">Choose your required service (plumbing, wiring, cleaning, driving) and set location.</p>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-surface-border shadow-soft relative">
+            <span class="text-4xl font-black text-brand-500/20 absolute top-4 right-4">02</span>
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold mb-4">
+              <i data-lucide="sliders" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-base text-charcoal-900 mb-1">Compare Pros & Rates</h3>
+            <p class="text-xs text-stone-600 leading-relaxed">Filter nearby professionals by distance, price quote, ratings & verified badges.</p>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-surface-border shadow-soft relative">
+            <span class="text-4xl font-black text-brand-500/20 absolute top-4 right-4">03</span>
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center font-bold mb-4">
+              <i data-lucide="calendar-check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-base text-charcoal-900 mb-1">Book & Track Live</h3>
+            <p class="text-xs text-stone-600 leading-relaxed">Confirm arrival time slot and track your assigned professional on the live map.</p>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-surface-border shadow-soft relative">
+            <span class="text-4xl font-black text-brand-500/20 absolute top-4 right-4">04</span>
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold mb-4">
+              <i data-lucide="check-circle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-base text-charcoal-900 mb-1">Pay Fairly & Review</h3>
+            <p class="text-xs text-stone-600 leading-relaxed">Pay standard rates via UPI or Cash. Leave a review to boost the worker's reputation.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TESTIMONIAL STORIES -->
+      <section class="py-12 bg-surface-bg border-t border-surface-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-10">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-charcoal-900">Real Stories of Dignity & Opportunity</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-2xl border border-surface-border shadow-soft space-y-4">
+              <p class="text-sm text-stone-700 italic leading-relaxed">
+                "Before KaamSaathi, I waited at local chowks for daily labor jobs with unpredictable pay. Today, my KaamSaathi ID has 300+ 5-star ratings. Customers call me directly and I earn 40% higher income every month."
+              </p>
+              <div class="flex items-center gap-3 pt-2">
+                <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80" class="w-12 h-12 rounded-xl object-cover" alt="Suman">
+                <div>
+                  <h4 class="font-bold text-sm text-charcoal-900">Suman Das</h4>
+                  <p class="text-xs text-stone-500">Master Plumber · Kolkata</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-surface-border shadow-soft space-y-4">
+              <p class="text-sm text-stone-700 italic leading-relaxed">
+                "When my main water pipeline burst at 9 PM, no local plumber picked up calls. Through KaamSaathi Emergency SOS, Suman arrived within 18 minutes with transparent upfront pricing. Remarkable service!"
+              </p>
+              <div class="flex items-center gap-3 pt-2">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-12 h-12 rounded-xl object-cover" alt="Priya">
+                <div>
+                  <h4 class="font-bold text-sm text-charcoal-900">Priya Sharma</h4>
+                  <p class="text-xs text-stone-500">Homeowner · Salt Lake, Kolkata</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FINAL LANDING CTA -->
+      <section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="bg-brand-600 text-white rounded-3xl p-10 sm:p-16 shadow-floating space-y-6">
+          <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight">Work Should Never Be Invisible.</h2>
+          <p class="text-brand-100 text-base max-w-2xl mx-auto">Whether you need a reliable technician or want to turn your skilled work into a thriving business identity—KaamSaathi is built for you.</p>
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <button @click="activeView = 'discover'" class="w-full sm:w-auto px-8 py-4 bg-white text-brand-600 hover:bg-stone-100 font-extrabold text-base rounded-2xl shadow-md transition-all">
+              Find a Worker Nearby
+            </button>
+            <button @click="activeView = 'jobs'" class="w-full sm:w-auto px-8 py-4 bg-brand-700 hover:bg-brand-800 text-white font-extrabold text-base rounded-2xl border border-brand-500 transition-all">
+              Find Skilled Work
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ================= 2. DISCOVER / MARKETPLACE SEARCH VIEW ================= -->
+    <div v-if="activeView === 'discover'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      <!-- TOP SEARCH & FILTER BAR -->
+      <div class="bg-white p-6 rounded-3xl border border-surface-border shadow-soft space-y-4">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-extrabold text-charcoal-900">Find Trusted Local Workers</h1>
+            <p class="text-xs text-stone-500">Showing verified skilled professionals in <span class="font-bold text-charcoal-900">Kolkata</span></p>
+          </div>
+
+          <!-- SEARCH INPUT -->
+          <div class="w-full md:w-auto flex-1 max-w-md relative">
+            <i data-lucide="search" class="w-5 h-5 text-stone-400 absolute left-3.5 top-3"></i>
+            <input type="text" v-model="searchQuery" placeholder="Search by skill, name or service..." class="w-full pl-11 pr-4 py-2.5 bg-surface-bg border border-stone-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+        </div>
+
+        <!-- FILTER CHIPS & SORT -->
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-stone-100">
+          <div class="flex flex-wrap items-center gap-2">
+            <button @click="selectedCategoryFilter = ''" :class="selectedCategoryFilter === '' ? 'bg-brand-600 text-white font-bold' : 'bg-surface-bg text-stone-700 hover:bg-stone-100'" class="px-3.5 py-1.5 text-xs rounded-xl border border-stone-200 transition-colors">
+              All Categories
+            </button>
+            <button v-for="cat in serviceCategories" :key="cat.name" @click="selectedCategoryFilter = cat.name" :class="selectedCategoryFilter === cat.name ? 'bg-brand-600 text-white font-bold' : 'bg-surface-bg text-stone-700 hover:bg-stone-100'" class="px-3.5 py-1.5 text-xs rounded-xl border border-stone-200 transition-colors flex items-center gap-1.5">
+              <span>{{ cat.icon }}</span>
+              <span>{{ cat.name }}</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+              <input type="checkbox" v-model="verifiedOnly" class="rounded text-brand-600 focus:ring-brand-500">
+              <span>Verified Only</span>
+            </label>
+
+            <select v-model="sortBy" class="bg-surface-bg border border-stone-200 text-xs font-semibold px-3 py-1.5 rounded-xl text-charcoal-900 cursor-pointer">
+              <option value="recommended">Recommended</option>
+              <option value="rating">Highest Rated</option>
+              <option value="distance">Nearest First</option>
+              <option value="price">Lowest Price</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRICE COMPARISON MATRIX WIDGET -->
+      <div class="bg-amber-50/80 border border-amber-200 p-5 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-amber-700"></i>
+            <h3 class="text-xs font-bold text-amber-900 uppercase tracking-wider">Transparent Fair Pricing Benchmarks</h3>
+          </div>
+          <p class="text-xs text-amber-800">
+            Typical local rate in Kolkata for <span class="font-bold underline">{{ selectedCategoryFilter || 'General Repairs' }}</span>: <strong class="text-amber-950">₹250 – ₹450</strong> (excluding spare parts).
+          </p>
+        </div>
+        <span class="text-[11px] bg-white text-amber-900 font-semibold px-3 py-1.5 rounded-lg border border-amber-200 shadow-sm">
+          ✓ Verified anti-scam price guarantee
+        </span>
+      </div>
+
+      <!-- WORKER GRID -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="worker in filteredWorkers" :key="worker.id" class="bg-white rounded-2xl border border-surface-border shadow-soft hover:shadow-hover transition-all flex flex-col justify-between p-5 relative">
+          
+          <!-- TOP CARD HEADER -->
+          <div>
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <img :src="worker.photo" class="w-14 h-14 rounded-xl object-cover border-2 border-brand-500" :alt="worker.name">
+                <div>
+                  <h3 class="font-bold text-base text-charcoal-900 flex items-center gap-1.5">
+                    {{ worker.name }}
+                    <i v-if="worker.verified" data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 fill-emerald-100"></i>
+                  </h3>
+                  <p class="text-xs font-semibold text-brand-600">{{ worker.skill }}</p>
+                  <p class="text-[11px] text-stone-500">{{ worker.experience }} yrs experience</p>
+                </div>
+              </div>
+              <span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-lg border border-emerald-200">
+                {{ worker.distance }} km
+              </span>
+            </div>
+
+            <!-- SKILLS TAGS -->
+            <div class="flex flex-wrap gap-1 my-4">
+              <span v-for="s in worker.skills.slice(0,3)" :key="s" class="px-2 py-0.5 bg-stone-100 text-stone-700 text-[11px] font-medium rounded-md">
+                {{ s }}
+              </span>
+            </div>
+
+            <!-- RATING & JOBS -->
+            <div class="flex items-center justify-between text-xs pt-3 border-t border-stone-100">
+              <span class="text-amber-500 font-bold flex items-center gap-1">
+                ⭐ {{ worker.rating }} <span class="text-stone-400 font-normal">({{ worker.completedJobs }} jobs)</span>
+              </span>
+              <span class="text-stone-600 font-semibold">Trust Score: <strong class="text-emerald-600">{{ worker.trustScore }}/100</strong></span>
+            </div>
+          </div>
+
+          <!-- BOTTOM CARD FOOTER -->
+          <div class="pt-4 mt-4 border-t border-stone-100 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] text-stone-400 font-semibold">ESTIMATED RATE</p>
+              <p class="text-base font-extrabold text-charcoal-900">₹{{ worker.price }} <span class="text-[10px] text-stone-500 font-normal">starting</span></p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button @click="viewWorkerProfile(worker)" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold rounded-xl transition-colors">
+                Profile
+              </button>
+              <button @click="initiateBooking(worker)" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors">
+                Book Now
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= 3. WORKER PROFILE PAGE VIEW ================= -->
+    <div v-if="activeView === 'profile' && activeWorker" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      <!-- BACK BUTTON -->
+      <button @click="activeView = 'discover'" class="inline-flex items-center gap-2 text-xs font-bold text-stone-600 hover:text-brand-600 transition-colors">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        <span>Back to Discover Marketplace</span>
+      </button>
+
+      <!-- PRO PROFILE HEADER CARD -->
+      <div class="bg-white rounded-3xl border border-surface-border shadow-soft overflow-hidden">
+        <!-- COVER HEADER GRAPHIC -->
+        <div class="h-32 bg-gradient-to-r from-orange-500 to-amber-500 p-6 flex justify-between items-start">
+          <span class="bg-white/20 backdrop-blur-md text-white font-bold text-xs px-3 py-1 rounded-full border border-white/30">
+            KaamSaathi Verified Skilled Professional
+          </span>
+          <button @click="shareProfile" class="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white rounded-full text-xs font-bold transition-all">
+            <i data-lucide="share-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="p-6 sm:p-8 -mt-12 relative">
+          <div class="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 border-b border-stone-100 pb-6">
+            <div class="flex items-end gap-5">
+              <img :src="activeWorker.photo" class="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-lg bg-white" :alt="activeWorker.name">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <h1 class="text-2xl font-extrabold text-charcoal-900">{{ activeWorker.name }}</h1>
+                  <span v-if="activeWorker.verified" class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i> Verified Pro
+                  </span>
+                </div>
+                <p class="text-sm font-bold text-brand-600">{{ activeWorker.skill }} · {{ activeWorker.experience }} Years Experience</p>
+                <p class="text-xs text-stone-500 flex items-center gap-1">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5 text-stone-400"></i>
+                  <span>{{ activeWorker.location }} (Serves within 8 km)</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <button @click="initiateBooking(activeWorker)" class="flex-1 sm:flex-initial px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-md transition-all">
+                Book Service (₹{{ activeWorker.price }})
+              </button>
+            </div>
+          </div>
+
+          <!-- TRUST METRICS ROW -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 py-6 border-b border-stone-100 text-center">
+            <div class="p-3 bg-surface-bg rounded-xl">
+              <p class="text-xs text-stone-500 font-medium">Rating</p>
+              <p class="text-xl font-black text-amber-500">⭐ {{ activeWorker.rating }}</p>
+            </div>
+            <div class="p-3 bg-surface-bg rounded-xl">
+              <p class="text-xs text-stone-500 font-medium">Completed Jobs</p>
+              <p class="text-xl font-black text-charcoal-900">{{ activeWorker.completedJobs }}</p>
+            </div>
+            <div class="p-3 bg-surface-bg rounded-xl">
+              <p class="text-xs text-stone-500 font-medium">Trust Score</p>
+              <p class="text-xl font-black text-emerald-600">{{ activeWorker.trustScore }}/100</p>
+            </div>
+            <div class="p-3 bg-surface-bg rounded-xl">
+              <p class="text-xs text-stone-500 font-medium">Repeat Rate</p>
+              <p class="text-xl font-black text-blue-600">88%</p>
+            </div>
+          </div>
+
+          <!-- TABBED SECTIONS -->
+          <div class="pt-6 space-y-6">
+            <!-- ABOUT -->
+            <div>
+              <h3 class="text-base font-extrabold text-charcoal-900 mb-2">About Professional</h3>
+              <p class="text-xs text-stone-600 leading-relaxed">{{ activeWorker.about }}</p>
+            </div>
+
+            <!-- SKILLS & VERIFICATIONS -->
+            <div>
+              <h3 class="text-base font-extrabold text-charcoal-900 mb-2">Verified Skills</h3>
+              <div class="flex flex-wrap gap-2">
+                <span v-for="skill in activeWorker.skills" :key="skill" class="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl flex items-center gap-1.5">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                  {{ skill }}
+                </span>
+              </div>
+            </div>
+
+            <!-- WORK PORTFOLIO GALLERY -->
+            <div>
+              <h3 class="text-base font-extrabold text-charcoal-900 mb-3">Photo Portfolio (Recent Jobs)</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <img v-for="(img, idx) in activeWorker.portfolio" :key="idx" :src="img" class="w-full h-32 object-cover rounded-xl border border-stone-200 hover:opacity-90 cursor-pointer shadow-sm" alt="Portfolio item">
+              </div>
+            </div>
+
+            <!-- REVIEWS -->
+            <div>
+              <h3 class="text-base font-extrabold text-charcoal-900 mb-3">Customer Reviews</h3>
+              <div class="space-y-3">
+                <div v-for="rev in activeWorker.reviews" :key="rev.author" class="p-4 bg-surface-bg rounded-xl border border-surface-border space-y-1">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-charcoal-900">{{ rev.author }}</span>
+                    <span class="text-amber-500 font-bold">⭐ {{ rev.stars }}</span>
+                  </div>
+                  <p class="text-xs text-stone-600">{{ rev.comment }}</p>
+                  <p class="text-[10px] text-stone-400">{{ rev.date }}</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= 4. WORKER JOBS / FIND WORK BOARD VIEW ================= -->
+    <div v-if="activeView === 'jobs'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      <div class="bg-gradient-to-r from-charcoal-900 to-stone-800 text-white p-8 rounded-3xl shadow-hover flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="space-y-2">
+          <span class="bg-brand-500/20 text-brand-400 text-xs font-bold px-3 py-1 rounded-full border border-brand-500/30">Worker Portal</span>
+          <h1 class="text-3xl font-extrabold">Find Work That Finds You.</h1>
+          <p class="text-stone-300 text-sm max-w-xl">Browse daily tasks, MSME contract listings, and full-time hiring posts directly from verified households and local businesses.</p>
+        </div>
+        <button @click="showWorkerIDModal = true" class="px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm rounded-xl shadow-lg transition-all whitespace-nowrap">
+          View My KaamSaathi ID
+        </button>
+      </div>
+
+      <!-- JOBS LISTING GRID -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div v-for="job in openJobs" :key="job.id" class="bg-white p-6 rounded-2xl border border-surface-border shadow-soft space-y-4 hover:shadow-hover transition-all">
+          <div class="flex items-start justify-between">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-1 rounded-md">{{ job.type }}</span>
+              <h3 class="font-bold text-lg text-charcoal-900 mt-2">{{ job.title }}</h3>
+              <p class="text-xs text-stone-500 flex items-center gap-1 mt-1">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-stone-400"></i>
+                <span>{{ job.location }} ({{ job.distance }} km away)</span>
+              </p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-stone-400">ESTIMATED PAY</p>
+              <p class="text-lg font-black text-emerald-600">₹{{ job.pay }}</p>
+            </div>
+          </div>
+
+          <p class="text-xs text-stone-600 leading-relaxed">{{ job.description }}</p>
+
+          <div class="flex items-center justify-between pt-3 border-t border-stone-100 text-xs">
+            <span class="text-stone-400">Posted {{ job.postedTime }}</span>
+            <button @click="applyForJob(job)" class="px-5 py-2 bg-charcoal-900 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors">
+              Quick Apply
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= 5. WORKER DASHBOARD VIEW ================= -->
+    <div v-if="activeView === 'dashboard'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      <!-- DASHBOARD HEADER -->
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-surface-border shadow-soft">
+        <div class="flex items-center gap-4">
+          <img src="https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80" class="w-16 h-16 rounded-2xl object-cover border-2 border-brand-600" alt="Rajesh">
+          <div>
+            <h1 class="text-2xl font-extrabold text-charcoal-900">Good morning, Rajesh 👋</h1>
+            <p class="text-xs text-stone-500">Certified Electrician · Kolkata Zone #4</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 beacon"></span>
+            <span>Status: Available for Jobs</span>
+          </div>
+          <button @click="showWorkerIDModal = true" class="px-4 py-2 bg-charcoal-900 text-white text-xs font-bold rounded-xl hover:bg-stone-800 transition-colors">
+            Digital ID Card
+          </button>
+        </div>
+      </div>
+
+      <!-- METRICS GRID -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="p-6 bg-white rounded-2xl border border-surface-border shadow-soft space-y-1">
+          <p class="text-xs text-stone-500 font-medium">Today's Earnings</p>
+          <p class="text-3xl font-black text-emerald-600">₹1,850</p>
+          <p class="text-[10px] text-emerald-700 font-bold">↑ +24% vs last week</p>
+        </div>
+
+        <div class="p-6 bg-white rounded-2xl border border-surface-border shadow-soft space-y-1">
+          <p class="text-xs text-stone-500 font-medium">Jobs Completed Today</p>
+          <p class="text-3xl font-black text-charcoal-900">4</p>
+          <p class="text-[10px] text-stone-400">Total Lifetime: 327</p>
+        </div>
+
+        <div class="p-6 bg-white rounded-2xl border border-surface-border shadow-soft space-y-1">
+          <p class="text-xs text-stone-500 font-medium">Customer Rating</p>
+          <p class="text-3xl font-black text-amber-500">4.9 ★</p>
+          <p class="text-[10px] text-stone-400">From 290 reviews</p>
+        </div>
+
+        <div class="p-6 bg-white rounded-2xl border border-surface-border shadow-soft space-y-1">
+          <p class="text-xs text-stone-500 font-medium">KaamSaathi Trust Score</p>
+          <p class="text-3xl font-black text-brand-600">94<span class="text-sm text-stone-400">/100</span></p>
+          <p class="text-[10px] text-emerald-600 font-bold">Top 5% Tier</p>
+        </div>
+      </div>
+
+      <!-- INCOMING JOB REQUESTS SECTION -->
+      <div class="bg-white p-6 rounded-3xl border border-surface-border shadow-soft space-y-4">
+        <h2 class="text-lg font-extrabold text-charcoal-900 flex items-center gap-2">
+          <i data-lucide="bell" class="w-5 h-5 text-brand-600"></i>
+          <span>Incoming Job Requests Nearby</span>
+        </h2>
+
+        <div class="space-y-4">
+          <div v-for="req in pendingRequests" :key="req.id" class="p-4 bg-surface-bg rounded-2xl border border-surface-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="bg-orange-100 text-brand-700 font-bold text-[10px] px-2 py-0.5 rounded">{{ req.category }}</span>
+                <h4 class="font-bold text-sm text-charcoal-900">{{ req.title }}</h4>
+              </div>
+              <p class="text-xs text-stone-500">📍 {{ req.address }} ({{ req.distance }} km) · Requested for {{ req.time }}</p>
+            </div>
+
+            <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+              <div class="text-right">
+                <p class="text-[10px] text-stone-400">EST. EARNING</p>
+                <p class="text-base font-extrabold text-emerald-600">₹{{ req.payout }}</p>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button @click="declineRequest(req.id)" class="px-3 py-2 bg-stone-200 text-stone-700 text-xs font-bold rounded-xl hover:bg-stone-300 transition-colors">
+                  Decline
+                </button>
+                <button @click="acceptRequest(req)" class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-sm">
+                  Accept Job
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHART SECTION -->
+      <div class="bg-white p-6 rounded-3xl border border-surface-border shadow-soft space-y-4">
+        <h2 class="text-lg font-extrabold text-charcoal-900">Weekly Earnings Overview</h2>
+        <div class="h-64">
+          <canvas id="earningsChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="bg-charcoal-900 text-white border-t border-stone-800 pt-12 pb-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div class="space-y-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold">
+            <i data-lucide="wrench" class="w-5 h-5"></i>
+          </div>
+          <span class="text-xl font-extrabold">KAAMSAATHI</span>
+        </div>
+        <p class="text-xs text-stone-400 leading-relaxed">
+          The professional network for India's skilled workforce. Connecting local service providers with fair opportunities and transparent trust.
+        </p>
+        <p class="text-[11px] text-stone-500">© 2026 KaamSaathi Technologies Pvt Ltd.</p>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold text-stone-300 uppercase tracking-wider mb-3">Platform</h4>
+        <ul class="space-y-2 text-xs text-stone-400">
+          <li><a href="#" @click.prevent="activeView = 'discover'" class="hover:text-white">Find Workers</a></li>
+          <li><a href="#" @click.prevent="activeView = 'jobs'" class="hover:text-white">Find Skilled Work</a></li>
+          <li><a href="#" @click.prevent="openEmergencyModal" class="hover:text-white text-red-400 font-bold">Emergency SOS Service</a></li>
+          <li><a href="#" @click.prevent="activeView = 'dashboard'" class="hover:text-white">Worker Dashboard</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold text-stone-300 uppercase tracking-wider mb-3">Trust & Safety</h4>
+        <ul class="space-y-2 text-xs text-stone-400">
+          <li>Identity Verification</li>
+          <li>Skill Assessment Badges</li>
+          <li>Fair Price Rate Cards</li>
+          <li>KaamSaathi Trust Score</li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold text-stone-300 uppercase tracking-wider mb-3">Cities Active</h4>
+        <div class="flex flex-wrap gap-1.5 text-stone-400 text-xs">
+          <span class="px-2 py-1 bg-stone-800 rounded">Kolkata</span>
+          <span class="px-2 py-1 bg-stone-800 rounded">Delhi NCR</span>
+          <span class="px-2 py-1 bg-stone-800 rounded">Mumbai</span>
+          <span class="px-2 py-1 bg-stone-800 rounded">Bengaluru</span>
+          <span class="px-2 py-1 bg-stone-800 rounded">Hyderabad</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= MOBILE BOTTOM NAVIGATION ================= -->
+  <div class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-surface-border px-4 py-2 flex items-center justify-around shadow-2xl">
+    <button @click="activeView = 'landing'" :class="activeView === 'landing' ? 'text-brand-600 font-bold' : 'text-stone-500'" class="flex flex-col items-center gap-1 text-[10px]">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span>Home</span>
+    </button>
+    <button @click="activeView = 'discover'" :class="activeView === 'discover' ? 'text-brand-600 font-bold' : 'text-stone-500'" class="flex flex-col items-center gap-1 text-[10px]">
+      <i data-lucide="search" class="w-5 h-5"></i>
+      <span>Discover</span>
+    </button>
+    <button @click="activeView = 'jobs'" :class="activeView === 'jobs' ? 'text-brand-600 font-bold' : 'text-stone-500'" class="flex flex-col items-center gap-1 text-[10px]">
+      <i data-lucide="briefcase" class="w-5 h-5"></i>
+      <span>Jobs</span>
+    </button>
+    <button @click="activeView = 'dashboard'" :class="activeView === 'dashboard' ? 'text-brand-600 font-bold' : 'text-stone-500'" class="flex flex-col items-center gap-1 text-[10px]">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      <span>Worker</span>
+    </button>
+  </div>
+
+  <!-- ================= MODAL: BOOKING FLOW & LIVE TRACKING ================= -->
+  <div v-if="bookingModalOpen" class="fixed inset-0 z-50 bg-charcoal-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-6 shadow-2xl border border-surface-border relative animate-in fade-in zoom-in duration-200">
+      
+      <button @click="bookingModalOpen = false" class="absolute top-4 right-4 text-stone-400 hover:text-charcoal-900">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <!-- STEP 1: CONFIRM BOOKING DETAILS -->
+      <div v-if="bookingStep === 1" class="space-y-4">
+        <div class="flex items-center gap-3">
+          <img :src="bookingWorker.photo" class="w-14 h-14 rounded-xl object-cover border-2 border-brand-600" alt="Booking worker">
+          <div>
+            <h3 class="font-extrabold text-base text-charcoal-900">Book {{ bookingWorker.name }}</h3>
+            <p class="text-xs text-brand-600 font-semibold">{{ bookingWorker.skill }} · ₹{{ bookingWorker.price }} starting</p>
+          </div>
+        </div>
+
+        <div class="space-y-3 pt-2">
+          <div>
+            <label class="text-xs font-bold text-stone-700 block mb-1">Describe Your Issue:</label>
+            <textarea v-model="bookingNotes" placeholder="e.g. Master switch tripping continuously..." class="w-full p-3 bg-surface-bg border border-stone-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500" rows="3"></textarea>
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-stone-700 block mb-1">Select Time Slot:</label>
+            <select v-model="selectedTimeSlot" class="w-full p-3 bg-surface-bg border border-stone-200 rounded-xl text-xs font-medium focus:outline-none">
+              <option value="Immediate (Within 30 mins)">Immediate (Within 30 mins)</option>
+              <option value="Today - Evening (5 PM - 7 PM)">Today - Evening (5 PM - 7 PM)</option>
+              <option value="Tomorrow Morning (10 AM)">Tomorrow Morning (10 AM)</option>
+            </select>
+          </div>
+        </div>
+
+        <button @click="confirmBooking" class="w-full py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-md transition-all">
+          Confirm Booking & Dispatch Worker
+        </button>
+      </div>
+
+      <!-- STEP 2: LIVE TRACKING SIMULATION -->
+      <div v-if="bookingStep === 2" class="space-y-6 text-center">
+        <div class="space-y-2">
+          <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+            🟢 Worker Dispatched
+          </span>
+          <h3 class="text-xl font-extrabold text-charcoal-900">{{ bookingWorker.name }} is on the way!</h3>
+          <p class="text-xs text-stone-500">Estimated Arrival: <strong class="text-brand-600 text-sm">14 mins</strong></p>
+        </div>
+
+        <!-- SIMULATED MAP UI -->
+        <div class="h-44 bg-emerald-950/10 rounded-2xl relative overflow-hidden flex items-center justify-center border border-emerald-200">
+          <div class="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
+          <div class="relative z-10 text-center space-y-1">
+            <i data-lucide="navigation" class="w-8 h-8 text-brand-600 mx-auto animate-bounce"></i>
+            <p class="text-xs font-bold text-charcoal-900">GPS Live Tracking Active</p>
+            <p class="text-[10px] text-stone-500">Distance: 1.2 km away from your location</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button @click="showToast('Calling worker...')" class="flex-1 py-3 bg-stone-100 text-stone-800 font-bold text-xs rounded-xl hover:bg-stone-200">
+            📞 Call Worker
+          </button>
+          <button @click="bookingModalOpen = false" class="flex-1 py-3 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700">
+            Done
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: DIGITAL KAAMSAATHI ID CARD ================= -->
+  <div v-if="showWorkerIDModal" class="fixed inset-0 z-50 bg-charcoal-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-6 shadow-2xl border border-surface-border relative text-center">
+      <button @click="showWorkerIDModal = false" class="absolute top-4 right-4 text-stone-400 hover:text-charcoal-900">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="bg-gradient-to-br from-charcoal-900 to-stone-800 text-white rounded-2xl p-6 shadow-xl space-y-4 border border-stone-700">
+        <div class="flex items-center justify-between border-b border-stone-700 pb-3">
+          <span class="text-[10px] font-mono tracking-widest text-brand-400 uppercase font-bold">KAAMSAATHI DIGITAL ID</span>
+          <span class="bg-emerald-500 text-white text-[9px] font-bold px-2 py-0.5 rounded">VERIFIED</span>
+        </div>
+
+        <img src="https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80" class="w-20 h-20 rounded-2xl mx-auto object-cover border-2 border-brand-500 shadow-md" alt="Rajesh Profile">
+
+        <div>
+          <h3 class="text-xl font-extrabold text-white">Rajesh Kumar</h3>
+          <p class="text-xs text-brand-400 font-semibold">Certified Master Electrician</p>
+          <p class="text-[11px] text-stone-400 mt-1">ID: #KS-882199 · Kolkata</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-left bg-stone-900/60 p-3 rounded-xl text-[11px]">
+          <div>
+            <span class="text-stone-500 block">Trust Score</span>
+            <span class="font-bold text-emerald-400">94 / 100</span>
+          </div>
+          <div>
+            <span class="text-stone-500 block">Rating</span>
+            <span class="font-bold text-amber-400">4.9 ★ (327 jobs)</span>
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-center">
+          <div class="w-16 h-16 bg-white p-1 rounded-lg flex items-center justify-center">
+            <!-- SIMULATED QR CODE -->
+            <div class="w-full h-full bg-charcoal-900 rounded flex items-center justify-center text-[8px] text-white font-mono">
+              QR CODE
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button @click="showToast('Digital ID saved to phone gallery!')" class="w-full py-3 bg-brand-600 text-white text-xs font-bold rounded-xl shadow-md">
+        Download Official ID Card
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: EMERGENCY SOS ================= -->
+  <div v-if="emergencyModalOpen" class="fixed inset-0 z-50 bg-red-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-red-200 relative">
+      <button @click="emergencyModalOpen = false" class="absolute top-4 right-4 text-stone-400 hover:text-charcoal-900">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-red-100 text-red-600 rounded-xl flex items-center justify-center font-bold">
+          <i data-lucide="zap" class="w-5 h-5 fill-red-600"></i>
+        </div>
+        <div>
+          <h3 class="font-extrabold text-lg text-charcoal-900">Emergency Rapid Dispatch</h3>
+          <p class="text-xs text-stone-500">Instant worker matching within 10-15 mins</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button v-for="sos in emergencyCategories" :key="sos.title" @click="triggerSOS(sos.title)" class="p-3 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 text-left space-y-1 transition-all">
+          <span class="text-lg">{{ sos.icon }}</span>
+          <p class="font-bold text-xs text-red-950">{{ sos.title }}</p>
+          <p class="text-[10px] text-red-700">{{ sos.desc }}</p>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div v-if="toastMessage" class="fixed top-24 right-4 z-50 bg-charcoal-900 text-white px-4 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center gap-2 border border-stone-700 animate-in slide-in-from-top duration-200">
+    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+    <span>{{ toastMessage }}</span>
+  </div>
+
+</div>
+
+<!-- VUE 3 LOGIC APP SCRIPT -->
+<script>
+  const { createApp, ref, computed, onMounted, nextTick } = Vue;
+
+  createApp({
+    setup() {
+      const activeView = ref('landing'); // 'landing', 'discover', 'profile', 'jobs', 'dashboard'
+      const searchQuery = ref('');
+      const selectedCategory = ref('');
+      const selectedCategoryFilter = ref('');
+      const userLocation = ref('Kolkata, Salt Lake');
+      const verifiedOnly = ref(false);
+      const sortBy = ref('recommended');
+      
+      const toastMessage = ref('');
+      const showWorkerIDModal = ref(false);
+      const bookingModalOpen = ref(false);
+      const bookingStep = ref(1);
+      const bookingWorker = ref(null);
+      const bookingNotes = ref('');
+      const selectedTimeSlot = ref('Immediate (Within 30 mins)');
+      const emergencyModalOpen = ref(false);
+
+      const popularTags = ['Electrician', 'Plumber', 'AC Repair', 'Mechanic', 'Painter', 'Cleaner', 'Driver'];
+
+      const serviceCategories = [
+        { name: 'Electrician', icon: '⚡' },
+        { name: 'Plumber', icon: '🚰' },
+        { name: 'AC Repair', icon: '❄️' },
+        { name: 'Mechanic', icon: '🔧' },
+        { name: 'Painter', icon: '🎨' },
+        { name: 'Carpenter', icon: '🪚' },
+        { name: 'Cleaner', icon: '🧹' },
+        { name: 'Driver', icon: '🚗' },
+      ];
+
+      const emergencyCategories = [
+        { icon: '🚰', title: 'Severe Water Leak', desc: 'Burst pipes or pump failure' },
+        { icon: '⚡', title: 'Total Power Cut', desc: 'Main short circuit / fuse trip' },
+        { icon: '❄️', title: 'AC Water Leakage', desc: 'Gas issue / coil breakdown' },
+        { icon: '🔑', title: 'Locksmith Emergency', desc: 'Door lock jam or key loss' },
+      ];
+
+      const workers = ref([
+        {
+          id: 1,
+          name: 'Rajesh Kumar',
+          skill: 'Certified Electrician',
+          category: 'Electrician',
+          experience: 8,
+          price: 299,
+          rating: 4.9,
+          completedJobs: 327,
+          trustScore: 94,
+          distance: 1.2,
+          verified: true,
+          location: 'Salt Lake, Kolkata',
+          photo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80',
+          about: 'Over 8 years of certified high-voltage & residential wiring experience. Expert in distribution board installation, MCB troubleshooting, and smart home fittings.',
+          skills: ['Sub-meter Fitting', 'Distribution Board', 'Inverter Wiring', 'Appliance Repair'],
+          portfolio: [
+            'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=300&auto=format&fit=crop&q=80',
+            'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300&auto=format&fit=crop&q=80',
+            'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=300&auto=format&fit=crop&q=80'
+          ],
+          reviews: [
+            { author: 'Vikram Roy', stars: 5, comment: 'Arrived within 15 minutes and fixed the short circuit cleanly!', date: '2 days ago' },
+            { author: 'Meghna Mukherjee', stars: 5, comment: 'Very polite, fair rate, transparent price card.', date: '1 week ago' }
+          ]
+        },
+        {
+          id: 2,
+          name: 'Suman Das',
+          skill: 'Master Plumber',
+          category: 'Plumber',
+          experience: 10,
+          price: 250,
+          rating: 4.8,
+          completedJobs: 412,
+          trustScore: 92,
+          distance: 2.1,
+          verified: true,
+          location: 'New Town, Kolkata',
+          photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+          about: '10+ years specializing in bathroom plumbing overhaul, water motor setup, and pipe leak detection.',
+          skills: ['Pipe Leakage', 'Water Heater Setup', 'Sanitary Fittings', 'Pump Repair'],
+          portfolio: [
+            'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=300&auto=format&fit=crop&q=80',
+            'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=300&auto=format&fit=crop&q=80'
+          ],
+          reviews: [
+            { author: 'Anirban Paul', stars: 5, comment: 'Great job with concealed pipe repair.', date: 'Yesterday' }
+          ]
+        },
+        {
+          id: 3,
+          name: 'Arif Khan',
+          skill: 'AC & HVAC Specialist',
+          category: 'AC Repair',
+          experience: 6,
+          price: 450,
+          rating: 4.8,
+          completedJobs: 184,
+          trustScore: 90,
+          distance: 2.4,
+          verified: true,
+          location: 'Park Street, Kolkata',
+          photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+          about: 'Specialized in split and window AC servicing, gas refilling, compressor repair, and PCB fixes.',
+          skills: ['Gas Refilling', 'Jet Foam Wash', 'Compressor Repair', 'PCB Diagnostics'],
+          portfolio: [
+            'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=300&auto=format&fit=crop&q=80'
+          ],
+          reviews: [
+            { author: 'Ritu Sen', stars: 5, comment: 'Cooled down our living room AC within 30 minutes!', date: '3 days ago' }
+          ]
+        },
+        {
+          id: 4,
+          name: 'Mohan Yadav',
+          skill: 'Furniture & Finish Carpenter',
+          category: 'Carpenter',
+          experience: 12,
+          price: 350,
+          rating: 4.7,
+          completedJobs: 250,
+          trustScore: 88,
+          distance: 3.8,
+          verified: false,
+          location: 'Bhowanipore, Kolkata',
+          photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+          about: 'Custom furniture crafting, modular kitchen alignment, door lock fitting, and wooden polished restoration.',
+          skills: ['Modular Kitchen', 'Door Lock Fitting', 'Wardrobe Repair', 'Furniture Polish'],
+          portfolio: [
+            'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=300&auto=format&fit=crop&q=80'
+          ],
+          reviews: [
+            { author: 'Debashis Roy', stars: 4, comment: 'Good quality woodwork.', date: '4 days ago' }
+          ]
+        }
+      ]);
+
+      const activeWorker = ref(workers.value[0]);
+
+      const openJobs = ref([
+        {
+          id: 101,
+          title: 'Residential Rewiring & Sub-Meter Setup',
+          type: 'Full Job',
+          location: 'Salt Lake Sector V, Kolkata',
+          distance: 1.5,
+          pay: '850',
+          postedTime: '10 mins ago',
+          description: 'Need certified electrician to replace main distribution fuse box and install 2 digital sub-meters.'
+        },
+        {
+          id: 102,
+          title: 'Commercial Office AC Maintenance Contract',
+          type: 'MSME Contract',
+          location: 'Rajarhat, Kolkata',
+          distance: 3.2,
+          pay: '4,500',
+          postedTime: '1 hour ago',
+          description: 'Quarterly servicing required for 8 split AC units in a local tech firm office.'
+        }
+      ]);
+
+      const pendingRequests = ref([
+        {
+          id: 201,
+          category: 'Wiring Emergency',
+          title: 'Main Circuit Breaker Tripping',
+          address: 'Block CF, Salt Lake',
+          distance: 1.1,
+          time: 'Today 6:00 PM',
+          payout: '450'
+        },
+        {
+          id: 202,
+          category: 'Appliance Fitting',
+          title: 'Geyser & Water Heater Installation',
+          address: 'Lake Town, Kolkata',
+          distance: 2.3,
+          time: 'Tomorrow 10:00 AM',
+          payout: '350'
+        }
+      ]);
+
+      // FILTERED WORKERS COMPUTED PROPERTY
+      const filteredWorkers = computed(() => {
+        return workers.value.filter(w => {
+          const matchesQuery = w.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
+                               w.skill.toLowerCase().includes(searchQuery.value.toLowerCase());
+          const matchesCat = selectedCategoryFilter.value === '' || w.category === selectedCategoryFilter.value;
+          const matchesVer = !verifiedOnly.value || w.verified;
+          return matchesQuery && matchesCat && matchesVer;
+        }).sort((a,b) => {
+          if (sortBy.value === 'rating') return b.rating - a.rating;
+          if (sortBy.value === 'distance') return a.distance - b.distance;
+          if (sortBy.value === 'price') return a.price - b.price;
+          return b.trustScore - a.trustScore; // default recommended
+        });
+      });
+
+      const showToast = (msg) => {
+        toastMessage.value = msg;
+        setTimeout(() => { toastMessage.value = ''; }, 3000);
+      };
+
+      const filterByTag = (tag) => {
+        selectedCategoryFilter.value = tag;
+        activeView.value = 'discover';
+      };
+
+      const viewWorkerProfile = (w) => {
+        activeWorker.value = w;
+        activeView.value = 'profile';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      const initiateBooking = (w) => {
+        bookingWorker.value = w;
+        bookingStep.value = 1;
+        bookingModalOpen.value = true;
+      };
+
+      const confirmBooking = () => {
+        bookingStep.value = 2; // Switch to live tracking
+        showToast(`Booking confirmed with ${bookingWorker.value.name}!`);
+      };
+
+      const openEmergencyModal = () => {
+        emergencyModalOpen.value = true;
+      };
+
+      const triggerSOS = (title) => {
+        emergencyModalOpen.value = false;
+        showToast(`🚨 SOS Alert Dispatched for ${title}! Nearby worker responding...`);
+      };
+
+      const applyForJob = (job) => {
+        showToast(`Application submitted for "${job.title}"!`);
+      };
+
+      const acceptRequest = (req) => {
+        pendingRequests.value = pendingRequests.value.filter(r => r.id !== req.id);
+        showToast(`Accepted job request #${req.id}!`);
+      };
+
+      const declineRequest = (id) => {
+        pendingRequests.value = pendingRequests.value.filter(r => r.id !== id);
+        showToast(`Declined request.`);
+      };
+
+      const shareProfile = () => {
+        showToast(`KaamSaathi Pro Profile link copied to clipboard!`);
+      };
+
+      const initChart = () => {
+        const ctx = document.getElementById('earningsChart');
+        if (ctx) {
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+              datasets: [{
+                label: 'Earnings (₹)',
+                data: [1200, 1500, 900, 1850, 2100, 2400, 1850],
+                backgroundColor: '#f97316',
+                borderRadius: 8,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                x: { grid: { display: false } }
+              }
+            }
+          });
+        }
+      };
+
+      onMounted(() => {
+        lucide.createIcons();
+        nextTick(() => {
+          initChart();
+        });
+      });
+
+      return {
+        activeView,
+        searchQuery,
+        selectedCategory,
+        selectedCategoryFilter,
+        userLocation,
+        verifiedOnly,
+        sortBy,
+        toastMessage,
+        showWorkerIDModal,
+        bookingModalOpen,
+        bookingStep,
+        bookingWorker,
+        bookingNotes,
+        selectedTimeSlot,
+        emergencyModalOpen,
+        popularTags,
+        serviceCategories,
+        emergencyCategories,
+        workers,
+        activeWorker,
+        openJobs,
+        pendingRequests,
+        filteredWorkers,
+        showToast,
+        filterByTag,
+        viewWorkerProfile,
+        initiateBooking,
+        confirmBooking,
+        openEmergencyModal,
+        triggerSOS,
+        applyForJob,
+        acceptRequest,
+        declineRequest,
+        shareProfile
+      };
+    }
+  }).mount('#app');
+</script>
+
+</body>
+</html>
